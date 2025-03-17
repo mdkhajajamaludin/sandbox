@@ -1,36 +1,83 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Code Sandbox - Online Code Editor
+
+A responsive web application that provides an online code editor with support for multiple programming languages. This application is designed to work well on both mobile phones and desktop computers.
+
+## Features
+
+- **Code Editor**: Monaco Editor integration for a powerful coding experience
+- **Multiple Language Support**: JavaScript, Python, Java, and C
+- **Responsive Design**: Works well on both mobile and desktop devices
+- **Code Execution**: Simulated code execution for demonstration purposes
+- **Download Code**: Save your code to your local machine
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+- Node.js 18.x or later
+- npm or yarn
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Installation
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+1. Clone the repository:
+   ```bash
+   git clone <repository-url>
+   cd code-sandbox
+   ```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+2. Install dependencies:
+   ```bash
+   npm install
+   # or
+   yarn install
+   ```
 
-## Learn More
+3. Run the development server:
+   ```bash
+   npm run dev
+   # or
+   yarn dev
+   ```
 
-To learn more about Next.js, take a look at the following resources:
+4. Open [http://localhost:3000](http://localhost:3000) in your browser to see the application.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Usage
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+1. Select a programming language from the dropdown menu
+2. Write your code in the editor
+3. Click the "Run" button to execute the code
+4. View the output in the output panel below the editor
+5. Use the "Download" button to save your code to your local machine
 
-## Deploy on Vercel
+## Code Execution
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+This demo uses simulated code execution for demonstration purposes. In a production environment, a secure sandboxed execution environment would be required.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+The current implementation:
+- JavaScript: Uses Function constructor to evaluate code (not secure for production)
+- Python, Java, C: Simulates execution by parsing print statements
+
+## Technologies Used
+
+- [Next.js](https://nextjs.org/) - React framework
+- [TypeScript](https://www.typescriptlang.org/) - Type-safe JavaScript
+- [Tailwind CSS](https://tailwindcss.com/) - Utility-first CSS framework
+- [Monaco Editor](https://microsoft.github.io/monaco-editor/) - Code editor
+- [Axios](https://axios-http.com/) - HTTP client
+
+## Mobile Responsiveness
+
+The application is designed to be fully responsive:
+- Adapts to different screen sizes
+- Optimized touch interactions for mobile devices
+- Flexible layout that works well on both portrait and landscape orientations
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## Acknowledgments
+
+- [Monaco Editor](https://microsoft.github.io/monaco-editor/) for the powerful code editing capabilities
+- [Next.js](https://nextjs.org/) for the React framework
+- [Tailwind CSS](https://tailwindcss.com/) for the utility-first CSS framework
