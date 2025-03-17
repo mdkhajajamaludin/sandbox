@@ -26,8 +26,13 @@ interface CodeEditorProps {
 
 // Define a proper type for the Monaco editor
 interface MonacoEditor {
-  getSelection: () => any;
-  executeEdits: (source: string, edits: any[]) => void;
+  getSelection: () => { startLineNumber: number; startColumn: number; endLineNumber: number; endColumn: number };
+  executeEdits: (source: string, edits: { 
+    identifier: { major: number; minor: number }; 
+    range: { startLineNumber: number; startColumn: number; endLineNumber: number; endColumn: number }; 
+    text: string; 
+    forceMoveMarkers: boolean 
+  }[]) => boolean;
   getValue: () => string;
   setValue: (value: string) => void;
 }
