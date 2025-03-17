@@ -92,12 +92,12 @@ const ImageScanner: React.FC<ImageScannerProps> = ({ onClose, onScanComplete }) 
 
   return (
     <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4 scanner-modal">
-      <div className="bg-card-bg rounded-lg w-full max-w-md overflow-hidden scanner-modal-content">
-        <div className="p-4 border-b border-border-color/30 flex justify-between items-center">
+      <div className="bg-card-bg rounded-lg w-full max-w-md overflow-hidden scanner-modal-content border-2 border-accent-color">
+        <div className="p-4 border-b border-border-color/30 flex justify-between items-center bg-gradient-to-r from-blue-500 to-purple-600 text-white">
           <h3 className="text-lg font-medium">Scan Your Image </h3>
           <button 
             onClick={onClose}
-            className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+            className="text-white hover:text-gray-200"
           >
             <FaTimes />
           </button>
@@ -109,20 +109,20 @@ const ImageScanner: React.FC<ImageScannerProps> = ({ onClose, onScanComplete }) 
           </p>
           
           {error && (
-            <div className="mb-4 p-3 bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300 rounded-md text-sm">
+            <div className="mb-4 p-3 bg-red-200 dark:bg-red-800/50 text-red-800 dark:text-red-200 rounded-md text-sm font-medium">
               <strong>Error:</strong> {error}
             </div>
           )}
           
           {warning && (
-            <div className="mb-4 p-3 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300 rounded-md text-sm flex items-start">
-              <FaExclamationTriangle className="mr-2 mt-0.5 flex-shrink-0" />
+            <div className="mb-4 p-3 bg-yellow-200 dark:bg-yellow-800/50 text-yellow-800 dark:text-yellow-200 rounded-md text-sm flex items-start font-medium">
+              <FaExclamationTriangle className="mr-2 mt-0.5 flex-shrink-0 text-yellow-600 dark:text-yellow-400" />
               <span>{warning}</span>
             </div>
           )}
           
           <div 
-            className={`image-drop-zone mb-4 ${selectedImage ? 'active' : ''}`}
+            className={`image-drop-zone mb-4 border-2 border-dashed rounded-lg p-4 cursor-pointer transition-all hover:border-accent-color ${selectedImage ? 'border-accent-color bg-accent-color/5' : 'border-gray-300 dark:border-gray-600'}`}
             onClick={triggerFileInput}
           >
             <input
@@ -138,19 +138,19 @@ const ImageScanner: React.FC<ImageScannerProps> = ({ onClose, onScanComplete }) 
                 <Image 
                   src={selectedImage} 
                   alt="Selected" 
-                  className="max-h-48 mx-auto rounded-md"
+                  className="max-h-48 mx-auto rounded-md shadow-md"
                   width={200}
                   height={150}
                   style={{ objectFit: 'contain', maxHeight: '12rem' }}
                 />
-                <div className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                <div className="mt-2 text-sm text-accent-color font-medium text-center">
                   Click to change image
                 </div>
               </div>
             ) : (
-              <div className="py-8">
-                <FaCamera className="mx-auto h-10 w-10 text-gray-400 dark:text-gray-600 mb-2" />
-                <p className="text-sm text-gray-500 dark:text-gray-400">
+              <div className="py-8 text-center">
+                <FaCamera className="mx-auto h-12 w-12 text-accent-color mb-3" />
+                <p className="text-sm font-medium text-accent-color">
                   Click to select an image
                 </p>
               </div>
@@ -160,17 +160,17 @@ const ImageScanner: React.FC<ImageScannerProps> = ({ onClose, onScanComplete }) 
           <div className="flex justify-end space-x-3">
             <button
               onClick={onClose}
-              className="px-4 py-2 text-sm border border-border-color/50 rounded-md hover:bg-gray-50 dark:hover:bg-gray-800"
+              className="px-4 py-2 text-sm border border-border-color/50 rounded-md hover:bg-gray-50 dark:hover:bg-gray-800 font-medium"
             >
               Cancel
             </button>
             <button
               onClick={handleScan}
               disabled={!selectedImage || isScanning}
-              className={`px-4 py-2 text-sm rounded-md text-white flex items-center ${
+              className={`px-4 py-2 text-sm rounded-md text-white font-medium shadow-md ${
                 !selectedImage || isScanning 
                   ? 'bg-gray-400 cursor-not-allowed' 
-                  : 'bg-accent-color hover:bg-accent-color/90'
+                  : 'bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700'
               }`}
             >
               {isScanning ? (

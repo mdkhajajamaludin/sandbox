@@ -69,7 +69,7 @@ const JavaAWTPreview: React.FC<JavaAWTPreviewProps> = ({ preview }) => {
   if (!preview) return null;
 
   return (
-    <div className="mt-3 p-3 bg-card-bg rounded-lg border border-border-color/50 overflow-hidden" ref={containerRef}>
+    <div className="p-3 bg-card-bg rounded-lg border border-border-color/50 overflow-hidden" ref={containerRef}>
       <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
         Java AWT/Swing Preview
       </h3>

@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import Editor from '@monaco-editor/react';
-import { FaPlay, FaSync, FaDownload, FaTerminal, FaDesktop } from 'react-icons/fa';
+import { FaPlay, FaSync, FaDownload, FaTerminal, FaDesktop, FaCamera } from 'react-icons/fa';
 import MobileToolbar from './MobileToolbar';
 import JavaAWTPreview from './JavaAWTPreview';
 import ImageScanner from './ImageScanner';
@@ -24,6 +24,14 @@ interface CodeEditorProps {
   output: string;
 }
 
+// Define a proper type for the Monaco editor
+interface MonacoEditor {
+  getSelection: () => any;
+  executeEdits: (source: string, edits: any[]) => void;
+  getValue: () => string;
+  setValue: (value: string) => void;
+}
+
 const CodeEditor: React.FC<CodeEditorProps> = ({ onExecute, isExecuting, output }) => {
   const [code, setCode] = useState<string>('// Write your code here\nconsole.log("Hello, World!");');
   const [language, setLanguage] = useState<string>('javascript');
@@ -31,7 +39,7 @@ const CodeEditor: React.FC<CodeEditorProps> = ({ onExecute, isExecuting, output 
   const [preview, setPreview] = useState<JavaAWTPreviewType | null>(null);
   const [isMobile, setIsMobile] = useState<boolean>(false);
   const [showScanner, setShowScanner] = useState<boolean>(false);
-  const editorRef = useRef<unknown>(null);
+  const editorRef = useRef<MonacoEditor | null>(null);
 
   // Check if we're on mobile
   useEffect(() => {
@@ -47,8 +55,14 @@ const CodeEditor: React.FC<CodeEditorProps> = ({ onExecute, isExecuting, output 
     };
   }, []);
 
-  const handleEditorDidMount = (editor: unknown) => {
+  const handleEditorDidMount = (editor: MonacoEditor) => {
     editorRef.current = editor;
+  };
+
+  const handleEditorChange = (value: string | undefined) => {
+    if (value !== undefined) {
+      setCode(value);
+    }
   };
 
   const handleLanguageChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -57,16 +71,17 @@ const CodeEditor: React.FC<CodeEditorProps> = ({ onExecute, isExecuting, output 
     setPreview(null);
     
     // Set default code for each language
+    let newCode = '';
     switch (newLang) {
       case 'javascript':
-        setCode('// Write your JavaScript code here\nconsole.log("Hello, World!");');
+        newCode = '// Write your JavaScript code here\nconsole.log("Hello, World!");';
         break;
       case 'python':
-        setCode('# Write your Python code here\nprint("Hello, World!")');
+        newCode = '# Write your Python code here\nprint("Hello, World!")';
         break;
       case 'java':
-        if (newLang === 'java' && e.target.options[e.target.selectedIndex].text === 'Java (AWT)') {
-          setCode(`// Java AWT Example
+        if (e.target.options[e.target.selectedIndex].text === 'Java (AWT)') {
+          newCode = `// Java AWT Example
 import java.awt.*;
 import java.awt.event.*;
 
@@ -92,22 +107,32 @@ public class SimpleGUI {
         
         frame.setVisible(true);
     }
-}`);
+}`;
         } else {
-          setCode('// Write your Java code here\npublic class Main {\n    public static void main(String[] args) {\n        System.out.println("Hello, World!");\n    }\n}');
+          newCode = '// Write your Java code here\npublic class Main {\n    public static void main(String[] args) {\n        System.out.println("Hello, World!");\n    }\n}';
         }
         break;
       case 'c':
-        setCode('// Write your C code here\n#include <stdio.h>\n\nint main() {\n    printf("Hello, World!\\n");\n    return 0;\n}');
+        newCode = '// Write your C code here\n#include <stdio.h>\n\nint main() {\n    printf("Hello, World!\\n");\n    return 0;\n}';
         break;
       default:
-        setCode('// Write your code here');
+        newCode = '// Write your code here';
+    }
+    
+    setCode(newCode);
+    
+    // Also update the editor directly if it's mounted
+    if (editorRef.current) {
+      editorRef.current.setValue(newCode);
     }
   };
 
   const handleExecute = async () => {
+    // Get the latest code from the editor if available
+    const currentCode = editorRef.current ? editorRef.current.getValue() : code;
+    
     setPreview(null);
-    onExecute(code, language);
+    onExecute(currentCode, language);
     
     // For Java AWT, we'll get the preview data from the API response
     try {
@@ -116,7 +141,7 @@ public class SimpleGUI {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ code, language }),
+        body: JSON.stringify({ code: currentCode, language }),
       });
       
       const data = await response.json();
@@ -125,7 +150,7 @@ public class SimpleGUI {
         setPreview(data.preview);
         
         // On mobile, switch to preview view if it's a Java AWT app
-        if (isMobile && (code.includes('java.awt') || code.includes('javax.swing'))) {
+        if (isMobile && (currentCode.includes('java.awt') || currentCode.includes('javax.swing'))) {
           setCurrentView('preview');
         } else {
           // Otherwise switch to output view
@@ -146,6 +171,9 @@ public class SimpleGUI {
   };
 
   const downloadCode = () => {
+    // Get the latest code from the editor if available
+    const currentCode = editorRef.current ? editorRef.current.getValue() : code;
+    
     const element = document.createElement('a');
     let extension = '';
     
@@ -166,7 +194,7 @@ public class SimpleGUI {
         extension = '.txt';
     }
     
-    const file = new Blob([code], { type: 'text/plain' });
+    const file = new Blob([currentCode], { type: 'text/plain' });
     element.href = URL.createObjectURL(file);
     element.download = `code${extension}`;
     document.body.appendChild(element);
@@ -197,16 +225,14 @@ public class SimpleGUI {
   const handleScanComplete = (generatedCode: string) => {
     // Insert the generated code at the cursor position or replace selected text
     if (editorRef.current) {
-      const editor = editorRef.current as unknown;
-      // Use type assertion for the editor methods we need
-      const editorWithMethods = editor as {
-        getSelection: () => unknown;
-        executeEdits: (source: string, edits: unknown[]) => void;
-      };
-      const selection = editorWithMethods.getSelection();
+      const editor = editorRef.current;
+      const selection = editor.getSelection();
       const id = { major: 1, minor: 1 };
       const op = { identifier: id, range: selection, text: generatedCode, forceMoveMarkers: true };
-      editorWithMethods.executeEdits("my-source", [op]);
+      editor.executeEdits("my-source", [op]);
+      
+      // Also update our state
+      setCode(editor.getValue());
     } else {
       // If editor ref is not available, just set the entire code
       setCode(generatedCode);
@@ -221,32 +247,44 @@ public class SimpleGUI {
 
   return (
     <div className="w-full h-full">
-      <div className="bg-card-bg p-3 rounded-t-lg border-b border-border-color/50 flex flex-wrap items-center justify-between gap-2">
-        <div className="flex items-center space-x-3">
-          <div className="flex space-x-1">
-            <div className="w-3 h-3 rounded-full bg-red-400"></div>
-            <div className="w-3 h-3 rounded-full bg-yellow-400"></div>
-            <div className="w-3 h-3 rounded-full bg-green-400"></div>
+      <div className="bg-gradient-to-r from-gray-900 to-gray-800 p-4 border-b border-gray-700 flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-4">
+          <div className="flex items-center">
+            <span className="font-bold text-base bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">Powered By NamTech</span>
           </div>
-          <select
-            id="language-select"
-            value={language}
-            onChange={handleLanguageChange}
-            className="block w-36 pl-3 pr-10 py-1.5 text-sm border border-border-color/50 rounded-md bg-card-bg focus:outline-none focus:ring-2 focus:ring-accent-color focus:border-accent-color transition-all"
-          >
-            <option value="javascript">JavaScript</option>
-            <option value="python">Python</option>
-            <option value="java">Java</option>
-            <option value="java">Java (AWT)</option>
-            <option value="c">C</option>
-          </select>
+          <div className="relative">
+            <select
+              id="language-select"
+              value={language}
+              onChange={handleLanguageChange}
+              className="appearance-none block w-44 pl-4 pr-10 py-2 text-sm font-medium bg-gray-800 border border-gray-700 text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm"
+            >
+              <option value="javascript">JavaScript</option>
+              <option value="python">Python</option>
+              <option value="java">Java</option>
+              <option value="java">Java (AWT)</option>
+              <option value="c">C</option>
+            </select>
+            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-400">
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </div>
+          </div>
         </div>
         
         {/* Desktop buttons - hidden on mobile */}
-        <div className="hidden sm:flex space-x-2">
+        <div className="hidden sm:flex space-x-3">
+          <button
+            onClick={handleScanImage}
+            className="btn inline-flex items-center px-4 py-2 border border-gray-700 text-sm font-medium bg-gray-800 hover:bg-gray-700 text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-900 transition-all"
+          >
+            <FaCamera className="mr-2 -ml-0.5 h-4 w-4" />
+            Scan
+          </button>
           <button
             onClick={downloadCode}
-            className="btn inline-flex items-center px-3 py-1.5 border border-border-color/50 text-sm font-medium rounded-md bg-card-bg hover:bg-gray-100 dark:hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent-color transition-all"
+            className="btn inline-flex items-center px-4 py-2 border border-gray-700 text-sm font-medium bg-gray-800 hover:bg-gray-700 text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-900 transition-all"
           >
             <FaDownload className="mr-2 -ml-0.5 h-4 w-4" />
             Save
@@ -254,8 +292,8 @@ public class SimpleGUI {
           <button
             onClick={handleExecute}
             disabled={isExecuting}
-            className={`btn btn-primary inline-flex items-center px-3 py-1.5 border border-transparent text-sm font-medium rounded-md shadow-sm ${
-              isExecuting ? 'bg-gray-400 cursor-not-allowed' : 'bg-accent-color hover:bg-accent-color/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent-color'
+            className={`btn inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium shadow-sm ${
+              isExecuting ? 'bg-gray-600 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-900'
             } transition-all`}
           >
             {isExecuting ? (
@@ -282,7 +320,7 @@ public class SimpleGUI {
               defaultLanguage="javascript"
               language={language}
               value={code}
-              onChange={(value) => setCode(value || '')}
+              onChange={handleEditorChange}
               onMount={handleEditorDidMount}
               theme="vs-dark"
               options={{
@@ -297,7 +335,7 @@ public class SimpleGUI {
             />
           </div>
         ) : currentView === 'output' ? (
-          <div className="output-container p-3 h-[calc(100vh-220px)] overflow-auto">
+          <div className="output-container p-3 h-[calc(100vh-220px)] overflow-auto border-t border-border-color/50">
             <h3 className="text-sm font-medium text-gray-400 mb-2 flex items-center">
               <FaTerminal className="mr-2 h-3 w-3" />
               Output
@@ -321,7 +359,7 @@ public class SimpleGUI {
           </div>
         ) : (
           // Preview view for mobile
-          <div className="h-[calc(100vh-220px)] overflow-auto p-3">
+          <div className="h-[calc(100vh-220px)] overflow-auto p-3 border-t border-border-color/50">
             <h3 className="text-sm font-medium text-gray-400 mb-2 flex items-center">
               <FaDesktop className="mr-2 h-3 w-3" />
               Java AWT Preview
@@ -345,7 +383,7 @@ public class SimpleGUI {
             defaultLanguage="javascript"
             language={language}
             value={code}
-            onChange={(value) => setCode(value || '')}
+            onChange={handleEditorChange}
             onMount={handleEditorDidMount}
             theme="vs-dark"
             options={{
@@ -360,19 +398,21 @@ public class SimpleGUI {
           />
         </div>
         
-        <div className="mt-3 output-container p-3">
+        <div className="output-container p-3 border-t border-border-color/50">
           <h3 className="text-sm font-medium text-gray-400 mb-2 flex items-center">
             <FaTerminal className="mr-2 h-3 w-3" />
             Output
           </h3>
-          <pre className="output-text p-3 rounded-md overflow-auto h-[100px] md:h-[120px] text-sm whitespace-pre-wrap">
+          <pre className="output-text p-3 overflow-auto h-[100px] md:h-[120px] text-sm whitespace-pre-wrap">
             {output || 'Run your code to see the output here...'}
           </pre>
         </div>
         
         {/* Java AWT Preview for desktop */}
         {hasJavaAWTImports && preview && (
-          <JavaAWTPreview preview={preview} />
+          <div className="mt-3">
+            <JavaAWTPreview preview={preview} />
+          </div>
         )}
       </div>
       

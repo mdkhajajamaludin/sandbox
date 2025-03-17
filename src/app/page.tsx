@@ -51,7 +51,7 @@ export default function Home() {
       <footer className="py-4 border-t border-border-color/30 backdrop-blur-sm">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <p className="text-center text-sm text-gray-500 dark:text-gray-400">
-            <span className="font-semibold">Code Sandbox</span> — A modern online code editor
+            <span className="font-semibold">Code Sandbox</span> — A Powered by NamTech
           </p>
         </div>
       </footer>
